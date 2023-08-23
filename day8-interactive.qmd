@@ -14,8 +14,12 @@ library(janitor)
 library(ggrepel)
 library(gghighlight)
 library(paletteer)
+library(paletteer)
 library(ggExtra)
 library(ggbeeswarm)
+
+library(gapminder)
+library(sf)
 ```
 
 ```{r}
@@ -83,4 +87,75 @@ ggplot(data = lizards, aes(x = total_length, y = weight )) +
                      # get rid of space in graph at the bottom
                      expand = c(0,0)) + scale_color_gradientn(colors = c("red","navy","orange"))
 ## use scale_color_gradientn(colors = c("yellow","orange","purple))
+```
+
+## Part 2
+
+```{r}
+ggplot(data = gapminder, aes(x = lifeExp, y= gdpPercap)) + geom_point()+ 
+  ## annotate and give the position 
+  annotate("text", x = 40, y = 90000, label = "A label!")+
+  # vertical and horizontal threshold line (line) 
+  geom_hline(yintercept = 70000, linetype = "dotted", color ="purple")+
+  #add a vertical line where the mean is 
+  geom_vline(xintercept = mean(gapminder$lifeExp))
+```
+
+Pipe straight into a ggplot
+
+```{r}
+gapminder %>% 
+  # keep data in 2002 for Europe
+  filter(continent == "Europe" & year == 2002) %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) + geom_point(shape = 18, size = 4, color = "purple")+ #geom_text_repel(aes(label = country)) + ##ggrepel  
+  gghighlight(country == "Poland", label_key = "country")
+
+
+gapminder %>% 
+# keep data in 2002 for Europe
+  filter(continent == "Europe" & year == 2002) %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) + geom_point() + geom_text_repel(aes(label = country)) + ##ggrepel  
+  gghighlight(country == "Poland")
+```
+
+Create a ggplot chart using data only from 2007, then highlight all countries in Europe, adding their country name as the label using the same x and y
+
+```{r}
+gapminder %>% 
+  filter(year == 2007) %>% 
+  ggplot(aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()+  geom_text_repel(aes(label = country)) +
+           gghighlight(country == "Norway")
+```
+
+### sf package: Spatial data
+
+```{r}
+
+## the spatial component will remain stuck to it here we selected just the name and the geometry remained
+# select can also be used to rename name
+#For geom_sf we do not need to specify where the geometry is it will look for it
+jornada_veg <- read_sf(here("data_raw/spatial_vegetation","doc.kml")) %>% 
+  select(name = Name)
+
+ggplot() + geom_sf(data = jornada_veg, aes(fill = name), color = NA) +
+  theme_minimal() +
+  scale_fill_paletteer_d(palette = "ggthemes::manyeys") + 
+  theme(panel.background = element_rect(color = "purple", size = 5, fill = "pink"),
+        plot.background = element_rect(fill = 'yellow'),
+        panel.grid = element_line(color = "magenta"))
+
+## must specify the element
+#element_line : grid line to change 
+
+ggplot() + geom_sf(data = jornada_veg, aes(fill = name), color = NA) +
+  theme_minimal() +
+  scale_fill_paletteer_d(palette = "ggthemes::Hue_Circle") + 
+  theme(panel.background = element_rect(color = "purple", size = 5, fill = "pink"),
+        plot.background = element_rect(fill = 'yellow'),
+        panel.grid.major = element_line(color = "magenta"),
+        axis.text.x = element_text(color = "red")) 
+
+
+
 ```
